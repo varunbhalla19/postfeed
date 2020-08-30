@@ -59,9 +59,11 @@ class Feed extends Component {
         return res.json();
       })
       .then((resData) => {
+        console.log(resData)
+        resData.totalItems = resData.length ;
         console.log(resData, resData.totalItems);
         this.setState({
-          posts: resData.posts,
+          posts: resData,
           totalPosts: resData.totalItems,
           postsLoading: false,
         });
@@ -124,6 +126,7 @@ class Feed extends Component {
       },
     })
       .then((res) => {
+        console.log(res) ;
         if (res.status !== 200 && res.status !== 201) {
           throw new Error("Creating or editing a post failed!");
         }
@@ -164,7 +167,7 @@ class Feed extends Component {
         });
       })
       .catch((err) => {
-        console.log(err);
+        console.log(err, err.response);
         this.setState({
           isEditing: false,
           editPost: null,
@@ -261,7 +264,7 @@ class Feed extends Component {
                   author={post.creator.name}
                   date={new Date(post.createdAt).toLocaleDateString("en-US")}
                   title={post.title}
-                  image={post.imageUrl}
+                  image={"http://localhost:8000/"+post.imageUrl}
                   content={post.content}
                   onStartEdit={this.startEditPostHandler.bind(this, post._id)}
                   onDelete={this.deletePostHandler.bind(this, post._id)}
