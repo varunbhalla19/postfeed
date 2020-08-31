@@ -120,10 +120,12 @@ class FeedEdit extends Component {
   };
 
   acceptPostChangeHandler = () => {
+    console.log('POST TO EDIT ', this.props.selectedPost)
     const post = {
       title: this.state.postForm.title.value,
-      // image: this.state.postForm.image.value,
+      image: this.state.postForm.image.value,
       content: this.state.postForm.content.value,
+      imageUrl : this.props.selectedPost ? this.props.selectedPost.imagePath : null 
     };
     this.props.onFinishEdit(post);
     this.setState({

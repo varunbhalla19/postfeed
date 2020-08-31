@@ -59,11 +59,11 @@ class Feed extends Component {
         return res.json();
       })
       .then((resData) => {
-        console.log(resData)
-        resData.totalItems = resData.length ;
+        console.log(resData);
+        resData.totalItems = resData.length;
         console.log(resData, resData.totalItems);
         this.setState({
-          posts: resData,
+          posts: resData.map((data) => ({ ...data, imagePath: data.imageUrl })),
           totalPosts: resData.totalItems,
           postsLoading: false,
         });
@@ -93,7 +93,7 @@ class Feed extends Component {
   startEditPostHandler = (postId) => {
     this.setState((prevState) => {
       const loadedPost = { ...prevState.posts.find((p) => p._id === postId) };
-
+      console.log("post to edit =>", loadedPost);
       return {
         isEditing: true,
         editPost: loadedPost,
@@ -106,27 +106,34 @@ class Feed extends Component {
   };
 
   finishEditHandler = (postData) => {
+    console.log("postData => ", postData);
     this.setState({
       editLoading: true,
     });
     // Set up data (with image!)
-    let url = "http://localhost:8000/posts";
+    let url = "http://localhost:8000/posts",
+      method = "POST";
+
     if (this.state.editPost) {
-      url = "URL";
+      method = "PUT";
+      url = `http://localhost:8000/posts/${this.state.editPost._id}`;
     }
 
+    console.log(method, url, postData);
+
+    const formData = new FormData();
+
+    formData.append("title", postData.title);
+    formData.append("content", postData.content);
+    formData.append("image", postData.image);
+    formData.append("imageUrl", postData.imageUrl);
+
     fetch(url, {
-      method: "POST",
-      body: JSON.stringify({
-        title: postData.title,
-        content: postData.content,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
+      method: method,
+      body: formData,
     })
       .then((res) => {
-        console.log(res) ;
+        console.log(res);
         if (res.status !== 200 && res.status !== 201) {
           throw new Error("Creating or editing a post failed!");
         }
@@ -135,16 +142,15 @@ class Feed extends Component {
       .then((resData) => {
         console.log(resData, resData.message);
         const post = {
-          _id: Math.floor(Math.random() * 10000),
+          _id: resData._id,
           title: resData.post.title,
           content: resData.post.content,
           creator: resData.post.creator,
           createdAt: resData.post.createdAt,
         };
-        console.log(post , this.state.editPost);
-        
-        this.setState((prevState) => {
+        console.log(post, this.state.editPost);
 
+        this.setState((prevState) => {
           let updatedPosts = [...prevState.posts];
 
           if (prevState.editPost) {
@@ -152,12 +158,11 @@ class Feed extends Component {
               (p) => p._id === prevState.editPost._id
             );
             updatedPosts[postIndex] = post;
-            console.log( 'updatedPOsts ==> ' , updatedPosts)
+            console.log("updatedPOsts ==> ", updatedPosts);
           } else if (prevState.posts.length < 2) {
             updatedPosts = prevState.posts.concat(post);
-            console.log( 'updatedPOsts ==> ' , updatedPosts)
+            console.log("updatedPOsts ==> ", updatedPosts);
           }
-
           return {
             posts: updatedPosts,
             isEditing: false,
@@ -183,7 +188,10 @@ class Feed extends Component {
 
   deletePostHandler = (postId) => {
     this.setState({ postsLoading: true });
-    fetch("URL")
+    let url = `http://localhost:8000/posts/${postId}`
+    fetch(url , {
+      method : 'Delete'
+    })
       .then((res) => {
         if (res.status !== 200 && res.status !== 201) {
           throw new Error("Deleting a post failed!");
@@ -264,7 +272,7 @@ class Feed extends Component {
                   author={post.creator.name}
                   date={new Date(post.createdAt).toLocaleDateString("en-US")}
                   title={post.title}
-                  image={"http://localhost:8000/"+post.imageUrl}
+                  image={"http://localhost:8000/" + post.imageUrl}
                   content={post.content}
                   onStartEdit={this.startEditPostHandler.bind(this, post._id)}
                   onDelete={this.deletePostHandler.bind(this, post._id)}
